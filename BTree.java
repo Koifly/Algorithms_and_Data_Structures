@@ -19,30 +19,19 @@ public class BTree {
     }
 
     public boolean hasKey(int key) {
-        this.printTree();
-        if (this.root.hasKey(key) == true) {
+        if (root.getKeys().contains(key)) {
             return true;
         } else {
-            int indexValue = -1;
-            for (int i = 0; i < this.root.getKeys().size(); i ++) {
-                if (key < this.root.getKeys().get(i)) {
-                    indexValue = i;
-                    break;
+            if (root.getChildren().size() != 0) {
+                for (int i = 0; i < root.getKeys().size(); i++) {
+                    if (key < root.getKeys().get(i)) {
+                        return root.getChildren().get(i).hasKey(key);
+                    }
                 }
+                return root.getChildren().get(root.getKeys().size()).hasKey(key);
             }
-            if (indexValue == -1) {
-                BTree nextTree = this;
-                nextTree.root = this.root.getChildren().get(this.root.getChildren().size() - 1);
-                return nextTree.root.hasKey(key);
-            } else  {
-                for (int i = 0; i <= indexValue; i++) {
-                    BTree nextTree = this;
-                    nextTree.root =  this.root.getChildren().get(i);
-                    return nextTree.root.hasKey(key);
-                }
-            }
+            return false;
         }
-        return false;
     }
 
     public BTreeNode parent;
@@ -76,6 +65,7 @@ public class BTree {
                 if (root.getKeys().size() <= 2 * degree) {
                     return;
                 } else {
+                    //splitting and sorting out the values apropiately throughout the tree
                     int median = (root.getKeys().size()) / 2;
                     if (parent != null) {
                         hasBeenAdded = false;
@@ -147,8 +137,38 @@ public class BTree {
     }
 
     public String toJson() {
-        // TODO
-        return null;
+        String JSONstring = "{";
+        if (this.root != null) {
+            JSONstring += "node:[";
+            for (int i = 0; i < root.getKeys().size(); i++) {
+                if (i == root.getKeys().size() - 1) {
+                    JSONstring += root.getKeys().get(i);
+                } else {
+                    JSONstring += root.getKeys().get(i) + ",";
+                }
+            }
+            JSONstring += "]";
+        }
+        if (root.getChildren().size() != 0) {
+            JSONstring += ",children:[";
+            for (int i = 0; i < root.getChildren().size(); i++) {
+                BTree child = new BTree(degree);
+                child.setRoot(root.getChildren().get(i));
+                if (i == root.getChildren().size() - 1) {
+                    JSONstring += child.toJson();
+                } else {
+                    child.parent = this.root;
+                    JSONstring += child.toJson();
+                }
+            }
+            JSONstring += "]";
+        }
+        if (parent == null) {
+            JSONstring += "}";
+        } else {
+            JSONstring += "},";
+        }
+        return JSONstring;
     }
 
     public void printTree() {
